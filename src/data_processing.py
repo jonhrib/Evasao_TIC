@@ -1,5 +1,7 @@
 import spacy
 import pandas as pd
+import subprocess
+import sys
 from spacy import displacy
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -9,12 +11,29 @@ class EntrevistaProcessor:
     def __init__(self):
         """Inicialização robusta com verificação de modelo e extensões"""
         try:
-            self.nlp = spacy.load("pt_core_news_lg")  # Modelo maior para melhor precisão
+            self.nlp = spacy.load("pt_core_news_lg")
             self._setup_custom_pipeline()
             self._valid = True
         except OSError:
-            self._valid = False
-            raise ImportError("Modelo de linguagem pt_core_news_lg não encontrado. Execute: python -m spacy download pt_core_news_lg")
+            st.warning("Baixando modelo de linguagem pt_core_news_lg...")
+            try:
+                # Tentar baixar o modelo
+                subprocess.check_call([sys.executable, "-m", "spacy", "download", "pt_core_news_lg"])
+                self.nlp = spacy.load("pt_core_news_lg")
+                self._setup_custom_pipeline()
+                self._valid = True
+                st.success("Modelo baixado e carregado com sucesso!")
+            except Exception as e:
+                st.error(f"Falha ao baixar o modelo: {str(e)}")
+                # Usar modelo menor como fallback
+                try:
+                    self.nlp = spacy.load("pt_core_news_sm")
+                    self._setup_custom_pipeline()
+                    self._valid = True
+                    st.info("Usando modelo menor pt_core_news_sm como alternativa")
+                except:
+                    self._valid = False
+                    st.error("Nenhum modelo de spaCy disponível")
     
     def _setup_custom_pipeline(self):
         """Configura pipeline personalizado para análise educacional"""

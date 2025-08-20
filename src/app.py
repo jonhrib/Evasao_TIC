@@ -142,7 +142,7 @@ def main():
     st.markdown("""
     **Sobre este painel:**  
     Desenvolvido como parte do projeto de TCC e estágio em Ciência da Computação na UNESPAR - Campus Apucarana.  
-    Orientador: Prof. Lisandro Rogério Modesto  
+    Orientador: Prof. Dr. Lisandro Rogério Modesto  
     Estudante: João Vitor de Souza Ribeiro  
     """)
 

@@ -11,33 +11,33 @@ class EntrevistaProcessor:
     def __init__(self):
         """Inicialização robusta com verificação de modelo e extensões"""
         try:
-            self.nlp = spacy.load("pt_core_news_lg")
+            self.nlp = spacy.load("pt_core_news_sm")  # Usando modelo pequeno (mais leve)
             self._setup_custom_pipeline()
             self._valid = True
+            print("Modelo pt_core_news_sm carregado com sucesso!")
         except OSError:
-            st.warning("Baixando modelo de linguagem pt_core_news_lg...")
+            print("Modelo pt_core_news_sm não encontrado. Tentando baixar...")
             try:
-                # Tentar baixar o modelo
-                subprocess.check_call([sys.executable, "-m", "spacy", "download", "pt_core_news_lg"])
-                self.nlp = spacy.load("pt_core_news_lg")
+                # Tentar baixar o modelo pequeno
+                subprocess.check_call([sys.executable, "-m", "spacy", "download", "pt_core_news_sm"])
+                self.nlp = spacy.load("pt_core_news_sm")
                 self._setup_custom_pipeline()
                 self._valid = True
-                st.success("Modelo baixado e carregado com sucesso!")
+                print("Modelo pt_core_news_sm baixado e carregado com sucesso!")
             except Exception as e:
-                st.error(f"Falha ao baixar o modelo: {str(e)}")
-                # Usar modelo menor como fallback
+                print(f"Falha ao baixar o modelo: {str(e)}")
+                # Fallback para modelo mínimo
                 try:
-                    self.nlp = spacy.load("pt_core_news_sm")
+                    self.nlp = spacy.load("pt_core_news_sm", disable=["parser", "ner"])
                     self._setup_custom_pipeline()
                     self._valid = True
-                    st.info("Usando modelo menor pt_core_news_sm como alternativa")
+                    print("Usando modelo mínimo como fallback")
                 except:
                     self._valid = False
-                    st.error("Nenhum modelo de spaCy disponível")
+                    print("Nenhum modelo de spaCy disponível")
     
     def _setup_custom_pipeline(self):
         """Configura pipeline personalizado para análise educacional"""
-        # Adiciona componentes personalizados se necessário
         if not self.nlp.has_pipe('sentencizer'):
             self.nlp.add_pipe('sentencizer')
     
@@ -89,7 +89,8 @@ class EntrevistaProcessor:
     def _extrair_temas(self, doc):
         """Extrai temas limpos do documento com filtros específicos para educação"""
         temas_especificos = ['curso', 'professor', 'disciplina', 'faculdade', 'ensino', 
-                           'aprendizado', 'dificuldade', 'evasão', 'permanência']
+                           'aprendizado', 'dificuldade', 'evasão', 'permanência', 'aula',
+                           'estudo', 'universidade', 'ensino', 'aprender', 'conteúdo']
         
         return [token.lemma_.lower() for token in doc 
                if not token.is_stop 
@@ -107,48 +108,55 @@ class EntrevistaProcessor:
         """Análise de sentimento com vocabulário específico para educação"""
         palavras_pos = [
             'bom', 'ótimo', 'excelente', 'gostei', 'facilidade', 'aprendi',
-            'ajudou', 'apoiou', 'consegui', 'evolui', 'melhor', 'recomendo'
+            'ajudou', 'apoiou', 'consegui', 'evolui', 'melhor', 'recomendo',
+            'satisfeito', 'ótima', 'bem', 'feliz', 'conteúdo', 'interessante'
         ]
         
         palavras_neg = [
             'ruim', 'difícil', 'problema', 'falta', 'abandonei', 'tranquei',
             'desisti', 'pior', 'decepcionado', 'insatisfeito', 'dificuldade',
-            'precário', 'deficiente', 'carência'
+            'precário', 'deficiente', 'carência', 'complexo', 'complicado'
         ]
         
         texto = texto.lower()
         pos = sum(1 for palavra in palavras_pos if palavra in texto)
         neg = sum(1 for palavra in palavras_neg if palavra in texto)
         
-        if pos > neg * 1.5:  # Limiar mais alto para positivo
+        if pos > neg * 1.5:
             return 'Positivo'
-        elif neg > pos * 1.5:  # Limiar mais alto para negativo
+        elif neg > pos * 1.5:
             return 'Negativo'
         else:
             return 'Neutro'
     
     def _analise_sentimento_textblob(self, texto):
         """Análise de sentimento usando TextBlob para polaridade contínua"""
-        analysis = TextBlob(texto)
-        return analysis.sentiment.polarity, analysis.sentiment.subjectivity
+        try:
+            analysis = TextBlob(texto)
+            return analysis.sentiment.polarity, analysis.sentiment.subjectivity
+        except:
+            return 0, 0  # Fallback em caso de erro
     
     def _extrair_frases_relevantes(self, doc, n=3):
         """Extrai frases mais relevantes baseadas em critérios de educação"""
-        # Implementação simplificada - pode ser melhorada
         frases = [sent.text for sent in doc.sents]
         return frases[:n] if len(frases) > n else frases
     
     def identificar_topicos(self, textos, n_topics=5):
         """Identifica tópicos principais usando LDA"""
-        vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words='portuguese')
-        dtm = vectorizer.fit_transform(textos)
-        
-        lda = LatentDirichletAllocation(n_components=n_topics, random_state=42)
-        lda.fit(dtm)
-        
-        topicos = []
-        for idx, topic in enumerate(lda.components_):
-            top_features = [vectorizer.get_feature_names_out()[i] for i in topic.argsort()[-10:]]
-            topicos.append(f"Tópico {idx}: {' '.join(top_features)}")
-        
-        return topicos
+        try:
+            vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words='portuguese')
+            dtm = vectorizer.fit_transform(textos)
+            
+            lda = LatentDirichletAllocation(n_components=n_topics, random_state=42)
+            lda.fit(dtm)
+            
+            topicos = []
+            for idx, topic in enumerate(lda.components_):
+                top_features = [vectorizer.get_feature_names_out()[i] for i in topic.argsort()[-10:]]
+                topicos.append(f"Tópico {idx}: {' '.join(top_features)}")
+            
+            return topicos
+        except Exception as e:
+            print(f"Erro na identificação de tópicos: {str(e)}")
+            return ["Análise de tópicos não disponível"]

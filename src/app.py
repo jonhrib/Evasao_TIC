@@ -79,7 +79,7 @@ def main():
         st.dataframe(processed_data.describe(include='all'))
     
     # Seção de filtros e visualizações
-   try:
+try:
     filtros = mostrar_filtros(processed_data)
     df_filtrado = processed_data.copy()
     

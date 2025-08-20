@@ -33,16 +33,24 @@ def mostrar_filtros(df):
             options=sorted(df['sentimento'].unique()),
             default=sorted(df['sentimento'].unique()))
         
-        # Filtros numéricos
+        # Filtros numéricos - COM VALIDAÇÃO
         idade_min, idade_max = int(df['idade'].min()), int(df['idade'].max())
+        # Garantir que min != max
+        if idade_min == idade_max:
+            idade_max = idade_min + 1  # Adiciona 1 para evitar erro
+            
         filtros['idade_range'] = st.slider(
             "Faixa Etária",
             min_value=idade_min,
             max_value=idade_max,
             value=(idade_min, idade_max))
         
-        # Filtro por polaridade
+        # Filtro por polaridade - COM VALIDAÇÃO
         polaridade_min, polaridade_max = float(df['polaridade'].min()), float(df['polaridade'].max())
+        # Garantir que min != max
+        if polaridade_min == polaridade_max:
+            polaridade_max = polaridade_min + 0.1  # Adiciona 0.1 para evitar erro
+            
         filtros['polaridade_range'] = st.slider(
             "Polaridade do Sentimento",
             min_value=polaridade_min,

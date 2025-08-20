@@ -84,21 +84,24 @@ def main():
         df_filtrado = processed_data.copy()
         
         # Aplicar filtros
-        if filtros.get('regiao') and filtros['regiao'] != "Todas":
+        # No app.py, modifique a seção de aplicação de filtros:
+
+# Aplicar filtros com validação
+if filtros.get('regiao') and filtros['regiao'] != "Todas":
     df_filtrado = df_filtrado[df_filtrado['regiao'] == filtros['regiao']]
-    if filtros.get('curso') and filtros['curso'] != "Todos":
-        df_filtrado = df_filtrado[df_filtrado['curso'] == filtros['curso']]
-    if filtros.get('situacao') and filtros['situacao'] != "Todas":
-        df_filtrado = df_filtrado[df_filtrado['situacao'] == filtros['situacao']]
-    if filtros.get('sentimento'):
-        df_filtrado = df_filtrado[df_filtrado['sentimento'].isin(filtros['sentimento'])]
-    if filtros.get('idade_range'):
-        min_idade, max_idade = filtros['idade_range']
-        # Validar se os valores são diferentes
-        if min_idade != max_idade:
-            df_filtrado = df_filtrado[(df_filtrado['idade'] >= min_idade) & (df_filtrado['idade'] <= max_idade)]
-    if filtros.get('polaridade_range'):
-        min_pol, max_pol = filtros['polaridade_range']
+if filtros.get('curso') and filtros['curso'] != "Todos":
+    df_filtrado = df_filtrado[df_filtrado['curso'] == filtros['curso']]
+if filtros.get('situacao') and filtros['situacao'] != "Todas":
+    df_filtrado = df_filtrado[df_filtrado['situacao'] == filtros['situacao']]
+if filtros.get('sentimento'):
+    df_filtrado = df_filtrado[df_filtrado['sentimento'].isin(filtros['sentimento'])]
+if filtros.get('idade_range'):
+    min_idade, max_idade = filtros['idade_range']
+    # Validar se os valores são diferentes
+    if min_idade != max_idade:
+        df_filtrado = df_filtrado[(df_filtrado['idade'] >= min_idade) & (df_filtrado['idade'] <= max_idade)]
+if filtros.get('polaridade_range'):
+    min_pol, max_pol = filtros['polaridade_range']
     # Validar se os valores são diferentes
     if min_pol != max_pol:
         df_filtrado = df_filtrado[(df_filtrado['polaridade'] >= min_pol) & (df_filtrado['polaridade'] <= max_pol)]

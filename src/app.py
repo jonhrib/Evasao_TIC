@@ -50,48 +50,26 @@ def main():
     with st.spinner('Gerando dados fictícios...'):
         df = carregar_dados();
     
-    # No app.py, modifique a seção de processamento:
-with st.spinner('Processando entrevistas...'):
-    try:
-        processor = EntrevistaProcessor()
-        resultados = []
-        
-        # Processar apenas uma amostra para teste inicial
-        sample_df = df.head(50)  # Processar apenas 50 primeiras para teste
-        
-        for idx, row in sample_df.iterrows():
-            serie_processada = processor.processar_entrevista(row)
-            resultados.append(serie_processada)
+    with st.spinner('Processando entrevistas...'):
+        try:
+            processor = EntrevistaProcessor()
+            resultados = []
             
-        processed_data = sample_df.join(pd.DataFrame(resultados), rsuffix='_processed')
-        
-        # Verificação de qualidade
-        if processed_data.isnull().values.any():
-            st.warning("Alguns dados processados contêm valores nulos - continuando com dados limitados")
-            # Preencher valores nulos
-            processed_data = processed_data.fillna({
-                'temas': [],
-                'sentimento': 'Neutro',
-                'entidades': [],
-                'polaridade': 0,
-                'subjetividade': 0,
-                'frases_chave': [],
-                'tokens_limpos': ''
-            })
+            for idx, row in df.iterrows():
+                serie_processada = processor.processar_entrevista(row)
+                resultados.append(serie_processada)
+                
+            processed_data = df.join(pd.DataFrame(resultados), rsuffix='_processed')
             
-    except Exception as e:
-        st.error(f"Falha no processamento: {str(e)}")
-        # Criar dados de fallback
-        fallback_data = {
-            'temas': [[]] * len(df),
-            'sentimento': ['Neutro'] * len(df),
-            'entidades': [[]] * len(df),
-            'polaridade': [0] * len(df),
-            'subjetividade': [0] * len(df),
-            'frases_chave': [[]] * len(df),
-            'tokens_limpos': [''] * len(df)
-        }
-        processed_data = df.join(pd.DataFrame(fallback_data, index=df.index))
+            # Verificação de qualidade
+            if processed_data.isnull().values.any():
+                st.error("Dados processados contêm valores nulos - verifique o processamento")
+                st.stop()
+                
+        except Exception as e:
+            st.error(f"Falha crítica no processamento: {str(e)}")
+            st.stop()
+    
     progress_bar.empty()
     status_text.empty()
     

@@ -61,8 +61,7 @@ def main():
             processor = EntrevistaProcessor()
             resultados = []
             
-            # Processar apenas uma amostra para teste inicial
-            sample_df = df.head(50)  # Processar apenas 50 primeiras para teste
+            sample_df = df.head(150)
             
             for idx, row in sample_df.iterrows():
                 serie_processada = processor.processar_entrevista(row)
